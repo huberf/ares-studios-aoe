@@ -5,6 +5,7 @@
 const int SHOT_CAPACITY = 6;
 const int TRIGGER_BUTTON = 5;
 
+int timeFired = 0;
 int shotsLeft = SHOT_CAPACITY;
 
 void setup() {
@@ -27,3 +28,6 @@ void fireGun() {
   // TODO: Built firing logic
 }
 
+void updateDisplay() {
+  // TODO: Build logic to update LCD with shots left
+}
