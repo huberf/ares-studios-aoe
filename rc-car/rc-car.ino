@@ -5,6 +5,8 @@
 #include <Adafruit_MotorShield.h>
 #include "utility/Adafruit_MS_PWMServoDriver.h"
 
+String botName = "Ares9";
+
 // Setup time section for polling connection
 #include <Time.h>
 #include <TimeLib.h>
@@ -26,6 +28,11 @@ Adafruit_DCMotor *motor3 = AFMS.getMotor(3);
 Adafruit_DCMotor *motor4 = AFMS.getMotor(4);
 
 int botMotionState = 0;
+int[][] systemDamage = [
+  [0, 0, 0],
+  [0, 0, 0],
+  [0, 0, 0]
+  ]
 
 //######### SETUP ######################################
 void setup() {
@@ -33,8 +40,8 @@ void setup() {
   delay(1000);
 
   // The name your bluetooth service will show up as, customize this if you have multiple devices
-  blePeripheral.setLocalName("DormBot");
-  blePeripheral.setDeviceName("DormBot");
+  blePeripheral.setLocalName(botName);
+  blePeripheral.setDeviceName(botName);
   blePeripheral.setAppearance(384);
 
   Blynk.begin(auth, blePeripheral);
@@ -198,4 +205,17 @@ BLYNK_READ(V5)
 {
   Blynk.virtualWrite(5, 1);
   lastPoll = now();
+}
+
+bool isDestroyed() {
+  int threshold = 5;
+  int dimensions = 3;
+  for (int a = 0; a < dimensions; a++) {
+    for (int b = 0; b < dimensions; b++) {
+      if (systemDamage[a][b] > threshold) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
