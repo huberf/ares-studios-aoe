@@ -2,7 +2,8 @@
  * Ares Studios: Gun Control
  */
 // Constants
-const int SHOT_CAPACITY = 6;
+const int SHOT_CAPACITY = 12;
+const int RECHARGE_DURATION = 200;
 const int TRIGGER_BUTTON = 5;
 const int LASER_PIN = 6;
 const int BUZZER_PIN = 9;
@@ -10,6 +11,7 @@ const int BUZZER_PIN = 9;
 // States
 boolean isFiring = false;
 boolean buttonPressedLastLoop = false;
+int cyclesWithButtonPressed = 0;
 
 int timeFired = 0;
 int shotsLeft = SHOT_CAPACITY;
@@ -36,7 +38,13 @@ void loop() {
       fireGun();
     }
     buttonPressedLastLoop = true;
+    cyclesWithButtonPressed += 1;
+    if (cyclesWithButtonPressed > RECHARGE_DURATION) {
+      reload();
+      cyclesWithButtonPressed = 0;
+    }
   } else {
+    cyclesWithButtonPressed = 0;
     buttonPressedLastLoop = false;
   }
   delay(10);
@@ -64,14 +72,18 @@ void fireGun() {
   }
 }
 
-void alertLowAmmo() {
-  // TODO: Write full logic to inform user of low ammo
+void reload() {
+  shotsLeft = SHOT_CAPACITY;
   for (int i = 0; i < 10; i++) {
     buzzPiezzo(1000, 50);
     delay(50);
     buzzPiezzo(500, 50);
     delay(50);
   }
+}
+
+void alertLowAmmo() {
+  buzzPiezzo(100, 500);
 }
 
 void updateDisplay() {
