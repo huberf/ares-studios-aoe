@@ -219,3 +219,10 @@ bool isDestroyed() {
   }
   return false;
 }
+
+// Read the destroyed status
+BLYNK_READ(V8)
+{
+  bool isDestroyed = isDestroyed();
+  Blynk.virtualWrite(8, isDestroyed);
+}
