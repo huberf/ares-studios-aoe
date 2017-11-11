@@ -59,7 +59,7 @@ void fireGun() {
   if (shotsLeft > 0) {
     isFiring = true;
     //soundFX(3.0,100.0);
-    buzzPiezzo(2000, 100);
+    gunSound();
     digitalWrite(LASER_PIN, HIGH);
     int fireDuration = 100;
     delay(fireDuration);
@@ -72,13 +72,66 @@ void fireGun() {
   }
 }
 
+void gunSound() {
+  for (int i = 0; i < 100; i++) {
+    buzzPiezzo((100 - i)*50 + 10, 2);
+    delay(2);
+  }
+  buzzPiezzo(500, 20);
+  delay(20);
+}
+
 void reload() {
   shotsLeft = SHOT_CAPACITY;
-  for (int i = 0; i < 10; i++) {
-    buzzPiezzo(1000, 50);
-    delay(50);
-    buzzPiezzo(500, 50);
-    delay(50);
+  reloadSound(0);
+  //reloadSound(1);
+  //reloadSound(2);
+  //reloadSound(3);
+  //reloadSound(4);
+}
+
+void reloadSound(int type) {
+  if (type == 0) {
+    for (int i = 0; i < 100; i++) {
+      buzzPiezzo(i*10*(sqrt(i)) + 100, 10);
+      delay(10);
+    }
+    for (int i = 0; i < 10; i++) {
+      buzzPiezzo(1100*sqrt(100) - i*10, 10);
+      delay(10);
+    }
+  } else if (type == 1) {
+    for (int i = 0; i < 100; i++) {
+      buzzPiezzo(i*10*(log(i)) + 100, 10);
+      delay(10);
+    }
+    for (int i = 0; i < 10; i++) {
+      buzzPiezzo(1100*log(100) - i*10, 10);
+      delay(10);
+    }
+  } else if (type == 2) {
+    for (int i = 0; i < 100; i++) {
+      buzzPiezzo(i*10*i + 100, 10);
+      delay(10);
+    }
+    for (int i = 0; i < 10; i++) {
+      buzzPiezzo(1100*i- i*10, 10);
+      delay(10);
+    }
+  } else if (type == 3) {
+    for (int i = 0; i < 100; i++) {
+      buzzPiezzo(i*10*sin(i) + 100, 10);
+      delay(10);
+    }
+    for (int i = 0; i < 10; i++) {
+      buzzPiezzo(1100 - i*10, 10);
+      delay(10);
+    }
+  } else if (type == 4) {
+    for (int i = 0; i < 100; i++) {
+      buzzPiezzo(500*(1 - 1/(pow(1.1, i))) + 100, 10);
+      delay(10);
+    }
   }
 }
 
