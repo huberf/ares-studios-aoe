@@ -27,6 +27,10 @@ Adafruit_DCMotor *motor2 = AFMS.getMotor(2);
 Adafruit_DCMotor *motor3 = AFMS.getMotor(3);
 Adafruit_DCMotor *motor4 = AFMS.getMotor(4);
 
+int timeSinceHit = 1000;
+int timeSinceDestroyed = 0;
+int hitPin = 9;
+
 int botMotionState = 0;
 int damage[3][3] = {
   {0, 0, 0},
@@ -60,6 +64,7 @@ void setup() {
   motor3->setSpeed(255);
   motor4->setSpeed(255);  
 
+  pinMode(hitPin, OUTPUT);
 }
 
 // Actuation Functions
@@ -106,6 +111,11 @@ bool isForwardSafe() {
 
 //########## LOOP ######################################
 void loop() {
+  if (timeSinceHit < 10) {
+    glowHit();
+  } else {
+    closeHit();
+  }
   Blynk.run();
   blePeripheral.poll();
   if (botMotionState == 0) {
@@ -123,14 +133,21 @@ void loop() {
     bool doNothing = true;
   }
   if (now() - lastPoll > 2) {
-    Serial.println("Killing motors. Connection dropped.");
+    //Serial.println("Killing motors. Connection dropped.");
     applyBrakes();
   }
   if (isDestroyed()) {
+    timeSinceDestroyed += 1;
     applyBrakes();
+    showDestroyed();
+  }
+  if (timeSinceDestroyed > 30) {
+    repair();
+    timeSinceDestroyed = 0;
   }
   // Read in sensors for damage
   handleSensors();
+  delay(10);
 }
 
 
@@ -213,7 +230,7 @@ BLYNK_READ(V5)
 }
 
 bool isDestroyed() {
-  int threshold = 5;
+  int threshold = 3;
   int dimensions = 3;
   for (int a = 0; a < dimensions; a++) {
     for (int b = 0; b < dimensions; b++) {
@@ -232,35 +249,70 @@ BLYNK_READ(V8)
   Blynk.virtualWrite(8, destroyed);
 }
 
+// Any activation of pin initiates repair
+BLYNK_WRITE(V20) {
+  repair();
+}
+
 /******************** 
  *  Sensor system   *
  *******************/
 int ticks = 0;
 // Sensor system, {pinNumber, average, damageCoordinateX, damageCoordinateY}
 int sensors[][4] = {
-  {0, 1000, 1, 1}
+  {0, 1000, 1, 1},
+  {1, 1000, 1, 0}
 };
 int sensorCount = 1;
 void handleSensors() {
+  Serial.println("Reading sensors");
   for (int a = 0; a < sensorCount; a++) {
     int lightPin = sensors[a][0];
     int reading = analogRead(lightPin);
+    Serial.println(reading);
     int average = sensors[a][1];
     average = average + (reading - average)/20;
     sensors[a][1] = average;
     
-    int activation = average - 30;
+    int activation = average + 30;
     Serial.println(reading);
     
-    if (reading < activation) {
+    if (reading > activation) {
       Serial.println("Hit detected");
+      timeSinceHit = 0;
       //digitalWrite(ledPin, HIGH);
       //delay(500);
       //digitalWrite(ledPin, LOW);
       int x = sensors[a][2];
       int y = sensors[a][3];
       damage[x][y] += 1;
+    } else {
+      timeSinceHit += 1;
     }
   }
   ticks += 1;
 }
+
+void glowHit() {
+  digitalWrite(hitPin, HIGH);
+}
+
+void closeHit() {
+  digitalWrite(hitPin, LOW);
+}
+
+void showDestroyed() {
+  digitalWrite(hitPin, HIGH);
+  delay(100);
+  digitalWrite(hitPin, LOW);
+}
+
+void repair() {
+  int dimensions = 3;
+  for (int i = 0; i < dimensions; i++) {
+    for (int j = 0; j < dimensions; j++) {
+      damage[i][j] = 0;
+    }
+  }
+}
+
