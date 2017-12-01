@@ -32,10 +32,16 @@ int timeSinceDestroyed = 0;
 int hitPin = 9;
 
 int botMotionState = 0;
+int sensorCount = 2;
 int damage[3][3] = {
   {0, 0, 0},
   {0, 0, 0},
   {0, 0, 0}
+};
+// Sensor system, {pinNumber, average, damageCoordinateX, damageCoordinateY}
+int sensors[][4] = {
+  {0, 1000, 1, 1},
+  {1, 1000, 1, 0}
 };
 
 //######### SETUP ######################################
@@ -65,6 +71,7 @@ void setup() {
   motor4->setSpeed(255);  
 
   pinMode(hitPin, OUTPUT);
+  testAmbient();
 }
 
 // Actuation Functions
@@ -141,13 +148,13 @@ void loop() {
     applyBrakes();
     showDestroyed();
   }
-  if (timeSinceDestroyed > 30) {
+  if (timeSinceDestroyed > 10) {
     repair();
     timeSinceDestroyed = 0;
   }
   // Read in sensors for damage
   handleSensors();
-  delay(10);
+  delay(5);
 }
 
 
@@ -230,7 +237,7 @@ BLYNK_READ(V5)
 }
 
 bool isDestroyed() {
-  int threshold = 3;
+  int threshold = 5;
   int dimensions = 3;
   for (int a = 0; a < dimensions; a++) {
     for (int b = 0; b < dimensions; b++) {
@@ -258,12 +265,6 @@ BLYNK_WRITE(V20) {
  *  Sensor system   *
  *******************/
 int ticks = 0;
-// Sensor system, {pinNumber, average, damageCoordinateX, damageCoordinateY}
-int sensors[][4] = {
-  {0, 1000, 1, 1},
-  {1, 1000, 1, 0}
-};
-int sensorCount = 1;
 void handleSensors() {
   Serial.println("Reading sensors");
   for (int a = 0; a < sensorCount; a++) {
@@ -271,13 +272,13 @@ void handleSensors() {
     int reading = analogRead(lightPin);
     Serial.println(reading);
     int average = sensors[a][1];
-    average = average + (reading - average)/20;
+    average = average + (reading - average)/30;
     sensors[a][1] = average;
     
-    int activation = average + 30;
-    Serial.println(reading);
+    int activation = average + 15;
+    //Serial.println(reading);
     
-    if (reading > activation) {
+    if (reading > activation && timeSinceHit > 10) {
       Serial.println("Hit detected");
       timeSinceHit = 0;
       //digitalWrite(ledPin, HIGH);
@@ -313,6 +314,18 @@ void repair() {
     for (int j = 0; j < dimensions; j++) {
       damage[i][j] = 0;
     }
+  }
+  testAmbient();
+}
+
+void testAmbient() {
+  for (int a = 0; a < sensorCount; a++) {
+    int average = 0;
+    for (int i = 0; i < 20; i++) {
+      average += analogRead(sensors[a][0]);
+    }
+    average = average/20;
+    sensors[a][1] = average;
   }
 }
 
