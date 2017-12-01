@@ -3,7 +3,7 @@
  */
 // Constants
 const int SHOT_CAPACITY = 12;
-const int RECHARGE_DURATION = 200;
+const int RECHARGE_DURATION = 50;
 const int TRIGGER_BUTTON = 5;
 const int LASER_PIN = 6;
 const int BUZZER_PIN = 9;
@@ -70,10 +70,10 @@ void fireGun() {
   if (shotsLeft > 0) {
     isFiring = true;
     //soundFX(3.0,100.0);
-    gunSound();
     digitalWrite(LASER_PIN, HIGH);
     int fireDuration = 100;
-    delay(fireDuration);
+    //delay(fireDuration);
+    gunSound();
     digitalWrite(LASER_PIN, LOW);
     isFiring = false;
     timeFired += fireDuration;
@@ -84,6 +84,15 @@ void fireGun() {
 }
 
 void gunSound() {
+  for (int i = 0; i < 100; i++) {
+    buzzPiezzo((100 - i)*50 + 10, 2);
+    delay(2);
+  }
+  buzzPiezzo(500, 20);
+  delay(20);
+}
+
+void gunSoundIndexed(int i) {
   for (int i = 0; i < 100; i++) {
     buzzPiezzo((100 - i)*50 + 10, 2);
     delay(2);

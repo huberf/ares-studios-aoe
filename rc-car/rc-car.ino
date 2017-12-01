@@ -38,10 +38,12 @@ int damage[3][3] = {
   {0, 0, 0},
   {0, 0, 0}
 };
-// Sensor system, {pinNumber, average, damageCoordinateX, damageCoordinateY}
-int sensors[][4] = {
-  {0, 1000, 1, 1},
-  {1, 1000, 1, 0}
+// Sensor system, {pinNumber, average, damageCoordinateX, damageCoordinateY, activation}
+// Sensor 0 is the front panel
+// Sensor 1 is the top panel
+int sensors[][5] = {
+  {0, 1000, 1, 1, 15},
+  {1, 1000, 1, 0, -100}
 };
 
 //######### SETUP ######################################
@@ -261,10 +263,15 @@ BLYNK_WRITE(V20) {
   repair();
 }
 
+BLYNK_WRITE(V21) {
+  //abnormalThreshold = param.asInt();
+}
+
 /******************** 
  *  Sensor system   *
  *******************/
 int ticks = 0;
+int hasHit = false;
 void handleSensors() {
   Serial.println("Reading sensors");
   for (int a = 0; a < sensorCount; a++) {
@@ -274,19 +281,27 @@ void handleSensors() {
     int average = sensors[a][1];
     average = average + (reading - average)/30;
     sensors[a][1] = average;
-    
-    int activation = average + 15;
+
+    int abnormalThreshold = sensors[a][4];
+
+    int activation = average + abnormalThreshold;
+    Serial.println(activation);
     //Serial.println(reading);
     
-    if (reading > activation && timeSinceHit > 10) {
+    if ((reading < activation && abnormalThreshold < 0) || (reading > activation && abnormalThreshold > 0) && timeSinceHit > 15) {
+      hasHit = true;
       Serial.println("Hit detected");
       timeSinceHit = 0;
       //digitalWrite(ledPin, HIGH);
       //delay(500);
       //digitalWrite(ledPin, LOW);
-      int x = sensors[a][2];
-      int y = sensors[a][3];
-      damage[x][y] += 1;
+    } else if ( reading > activation && timeSinceHit > 4) {
+      if (hasHit) {
+        int x = sensors[a][2];
+        int y = sensors[a][3];
+        damage[x][y] += 1;
+      }
+      hasHit = false;
     } else {
       timeSinceHit += 1;
     }
