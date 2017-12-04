@@ -9,8 +9,8 @@ const int LASER_PIN = 6;
 const int BUZZER_PIN = 9;
 
 const int DATA_PIN = 2;
-const int CLOCK_PIN = 3;
-const int LATCH_PIN = 4;
+const int CLOCK_PIN = 4;
+const int LATCH_PIN = 3;
 
 byte data = 0;
 
@@ -21,6 +21,7 @@ int cyclesWithButtonPressed = 0;
 
 int timeFired = 0;
 int shotsLeft = SHOT_CAPACITY;
+byte leds = 0;
 
 // To be used to record round durations
 int timer = 0;
@@ -162,13 +163,18 @@ void alertLowAmmo() {
 void updateDisplay() {
   // TODO: Build logic to update LCD with shots left
   int maxLeds = 8;
-  int litLeds = shotsLeft/2;
+  int litLeds = (shotsLeft+1)/2;
+  //litLeds = 7;
+  writeLeds(litLeds);
+  /*
+  Serial.println(litLeds);
   for (int i = 0; i < litLeds; i++) {
     shiftWrite(i, true);
   }
-  for (int i = (litLeds - 1); i < maxLeds; i++) {
+  for (int i = (litLeds); i < maxLeds; i++) {
     shiftWrite(i, false);
   }
+  */
 }
 
 void buzzPiezzo(int frequency, int duration) {
@@ -184,6 +190,26 @@ void soundFX(float amplitude,float period){
    digitalWrite(BUZZER_PIN,LOW);
    delayMicroseconds(uDelay);
  }
+}
+
+void writeLeds(int totalLit) {
+  leds = 0;
+  int ledMap[] = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+  for (int i = 0; i< totalLit; i++) {
+    int index = ledMap[i];
+    bitWrite(leds, index, HIGH);
+  }
+  //bitSet(leds, desiredPin);
+  digitalWrite(LATCH_PIN, LOW);
+  shiftOut(DATA_PIN, CLOCK_PIN, LSBFIRST, leds);
+
+  // Once the data is in the shift register, we still need to
+  // make it appear at the outputs. We'll toggle the state of
+  // the latchPin, which will signal the shift register to "latch"
+  // the data to the outputs. (Latch activates on the low-to
+  // -high transition).
+
+  digitalWrite(LATCH_PIN, HIGH);
 }
 
 /**
@@ -224,7 +250,13 @@ void shiftWrite(int desiredPin, boolean desiredState)
   // manipulating the data and clock pins to move the data
   // into the shift register:
 
-  shiftOut(DATA_PIN, CLOCK_PIN, MSBFIRST, data);
+  byte leds = 0;
+  for (int i = 0; i< desiredPin; i++) {
+    bitSet(leds, i);
+  }
+  //bitSet(leds, desiredPin);
+  digitalWrite(LATCH_PIN, LOW);
+  shiftOut(DATA_PIN, CLOCK_PIN, LSBFIRST, data);
 
   // Once the data is in the shift register, we still need to
   // make it appear at the outputs. We'll toggle the state of
