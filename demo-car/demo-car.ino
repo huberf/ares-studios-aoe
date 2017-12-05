@@ -76,6 +76,13 @@ void setup() {
   testAmbient();
 }
 
+void setSpeed(int speed) {
+  motor1->setSpeed(speed);
+  motor2->setSpeed(speed);
+  motor3->setSpeed(speed);
+  motor4->setSpeed(speed);
+}
+
 // Actuation Functions
 void applyBrakes() {
   motor1->run(RELEASE);
@@ -120,8 +127,10 @@ bool isForwardSafe() {
 
 int lastNow = millis();
 int timer = 0;
+int start = millis();
 //########## LOOP ######################################
 void loop() {
+  timer = millis() - start;
   Serial.println(millis() - lastNow);
   lastNow = millis();
   if (timeSinceHit < 10) {
@@ -153,7 +162,7 @@ void loop() {
     timeSinceDestroyed = 0;
   }
   // Switch every 1000 millisecods
-  if (timer % 500) {
+  if (timer % 1000) {
     if (botMotionState == 1) {
       botMotionState = 2;
     } else {
@@ -162,7 +171,6 @@ void loop() {
   }
   // Read in sensors for damage
   handleSensors();
-  timer += 1;
   delay(5);
 }
 
