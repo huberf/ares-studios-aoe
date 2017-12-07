@@ -42,9 +42,11 @@ int damage[3][3] = {
 // Sensor 0 is the front panel
 // Sensor 1 is the top panel
 int sensors[][6] = {
-  {0, 1000, 1, 1, -30, 0},
-  {1, 1000, 1, 0, 40, 0}
+  {0, 1000, 1, 1, -10, 0},
+  {1, 1000, 1, 0, -10, 0}
 };
+
+int powerPins[] = {6, 7};
 
 //######### SETUP ######################################
 void setup() {
@@ -71,6 +73,11 @@ void setup() {
   motor2->setSpeed(255);
   motor3->setSpeed(255);
   motor4->setSpeed(255);  
+
+  for (int i = 0; i < 2; i++) {
+    pinMode(powerPins[i], OUTPUT);
+    digitalWrite(powerPins[i], HIGH);
+  }
 
   pinMode(hitPin, OUTPUT);
   testAmbient();
@@ -128,8 +135,8 @@ void loop() {
   } else {
     closeHit();
   }
-  Blynk.run();
-  blePeripheral.poll();
+  //Blynk.run();
+  //blePeripheral.poll();
   if (botMotionState == 0) {
     applyBrakes();
   } else if (botMotionState == 1) {
@@ -281,7 +288,7 @@ void handleSensors() {
     int lightPin = sensors[a][0];
     int reading = analogRead(lightPin);
     Serial.println(reading);
-    bool fancyCode = false;
+    bool fancyCode = true;
     if (fancyCode) {
       if (sensorLoop(a, reading)) {
         int x = sensors[a][2];
@@ -290,7 +297,7 @@ void handleSensors() {
       }
     } else {
       int average = sensors[a][1];
-      average = average + (reading - average)/30;
+      average = average + (reading - average)/10;
       sensors[a][1] = average;
   
       int abnormalThreshold = sensors[a][4];
@@ -321,28 +328,27 @@ void handleSensors() {
   ticks += 1;
 }
 //DATA_COLLECTION_SIZE should be 5/3 times the expected duration of the laser
-const int DATA_COLLECTION_SIZE = 20;
-int THRESHOLD = 5;
+const int DATA_COLLECTION_SIZE = 23;
 
 int sensorData[2][DATA_COLLECTION_SIZE];
 int rewriteCursor[2] = {0, 0};
 
 bool sensorLoop(int a, int reading){
-  int THRESHOLD = sensors[a][4];
   if (sensors[a][5] < DATA_COLLECTION_SIZE){
       sensorData[a][sensors[a][5]] = reading;
       sensors[a][5]++;
     } else{
       shift(sensorData[a], DATA_COLLECTION_SIZE, reading);
-      int backAvg = averageOnSegment(sensorData[a], 0, DATA_COLLECTION_SIZE/5);
-      int midAvg = averageOnSegment(sensorData[a], 2*DATA_COLLECTION_SIZE/5, 3*DATA_COLLECTION_SIZE/5);
-      int frontAvg = averageOnSegment(sensorData[a], 4*DATA_COLLECTION_SIZE/5, DATA_COLLECTION_SIZE/5);
-      int fluctions = 1;
+      int backAvg = averageOnSegment(sensorData[a], 0, 14);
+      int midAvg = sensorData[a][17];
+      int frontAvg = averageOnSegment(sensorData[a], 19, 23);
 
+      if (midAvg > backAvg || midAvg > frontAvg){
+        return false;
+      }
       int activation = midAvg - (frontAvg + backAvg)/2;
-      activation /= fluctions;
 
-      if (activation > THRESHOLD){
+      if (activation < sensors[a][4]){
         Serial.println("Hit detected");
         sensors[a][5] = 0;
         return true;

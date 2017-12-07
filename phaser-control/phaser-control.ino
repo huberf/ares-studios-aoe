@@ -72,10 +72,12 @@ void fireGun() {
     isFiring = true;
     //soundFX(3.0,100.0);
     digitalWrite(LASER_PIN, HIGH);
+    //tone(LASER_PIN, 10000, 200);
     int fireDuration = 100;
     //delay(fireDuration);
     gunSound();
     digitalWrite(LASER_PIN, LOW);
+    delay(50);
     isFiring = false;
     timeFired += fireDuration;
     shotsLeft -= 1;
@@ -85,7 +87,10 @@ void fireGun() {
 }
 
 void gunSound() {
+  int timer = 0;
+  int tick = false;
   for (int i = 0; i < 100; i++) {
+    timer += 0;
     buzzPiezzo((100 - i)*50 + 10, 2);
     delay(2);
   }

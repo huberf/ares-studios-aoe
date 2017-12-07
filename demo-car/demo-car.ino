@@ -42,8 +42,8 @@ int damage[3][3] = {
 // Sensor 0 is the front panel
 // Sensor 1 is the top panel
 int sensors[][6] = {
-  {0, 1000, 1, 1, -30, 0},
-  {1, 1000, 1, 0, 40, 0}
+  {0, 1000, 1, 1, -10, 0},
+  {1, 1000, 1, 0, -10, 0}
 };
 
 //######### SETUP ######################################
@@ -125,14 +125,24 @@ bool isForwardSafe() {
   return true;
 }
 
+int frontTrack[] = {2000, 1000, 3000};
+int backTrack[] = {1000, 3000, 2000};
+int trackIndex = 0;
+int trackLength = 3;
+int trackTick = false;
+
 int lastNow = millis();
 int timer = 0;
+int tickZero = 0;
 int start = millis();
 //########## LOOP ######################################
 void loop() {
   timer = millis() - start;
   Serial.println(millis() - lastNow);
   lastNow = millis();
+  if (tickZero % 15) {
+    testAmbient();
+  }
   if (timeSinceHit < 10) {
     glowHit();
   } else {
@@ -162,16 +172,33 @@ void loop() {
     timeSinceDestroyed = 0;
   }
   // Switch every 1000 millisecods
-  if (timer % 1000) {
+  int trackTime = 0;
+  if (trackTick) {
+    trackTime = backTrack[trackIndex];
+  } else {
+    trackTime = frontTrack[trackIndex];
+  }
+  if (timer > trackTime) {
     if (botMotionState == 1) {
       botMotionState = 2;
     } else {
       botMotionState = 1;
     }
+    start = millis();
+    if (trackTick) {
+      trackIndex += 1;
+      trackTick = false;
+    } else {
+      trackTick = true;
+    }
+    if (trackIndex >= trackLength) {
+      trackIndex = 0;
+    }
   }
+  tickZero += 1;
   // Read in sensors for damage
   handleSensors();
-  delay(5);
+  //delay(5);
 }
 
 
