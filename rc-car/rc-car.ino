@@ -140,19 +140,24 @@ void loop() {
   }
   Blynk.run();
   blePeripheral.poll();
-  if (botMotionState == 0) {
-    applyBrakes();
-  } else if (botMotionState == 1) {
-    moveForward();
-  } else if (botMotionState == 2) {
-    moveBackward();
-  } else if (botMotionState == 3) {
-    turnRight();
-  } else if (botMotionState == 4) {
-    turnLeft();
+  bool fancyState = true;
+  if (!fancyState) {
+    if (botMotionState == 0) {
+      applyBrakes();
+    } else if (botMotionState == 1) {
+      moveForward();
+    } else if (botMotionState == 2) {
+      moveBackward();
+    } else if (botMotionState == 3) {
+      turnRight();
+    } else if (botMotionState == 4) {
+      turnLeft();
+    } else {
+      // Unknown movement operation
+      bool doNothing = true;
+    }
   } else {
-    // Unknown movement operation
-    bool doNothing = true;
+    drive();
   }
   if (now() - lastPoll > 2) {
     //Serial.println("Killing motors. Connection dropped.");
@@ -181,9 +186,11 @@ void drive() {
     }
   } else {
     if (forwardBackMotion == 1) {
-      moveForward();
-    } else if (forwardBackMotion == -1) {
+      //moveForward();
       moveBackward();
+    } else if (forwardBackMotion == -1) {
+      //moveBackward();
+      moveForward();
     } else {
       applyBrakes();
     }
