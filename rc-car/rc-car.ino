@@ -32,6 +32,8 @@ int timeSinceDestroyed = 0;
 int hitPin = 9;
 
 int botMotionState = 0;
+int forwardBackMotion = 0;
+int rightLeftMotion = 0;
 int sensorCount = 2;
 int damage[3][3] = {
   {0, 0, 0},
@@ -170,6 +172,24 @@ void loop() {
   delay(5);
 }
 
+void drive() {
+  if (rightLeftMotion == 1 || rightLeftMotion == -1) {
+    if (rightLeftMotion == 1) {
+      turnRight();
+    } else if(rightLeftMotion == -1) {
+      turnLeft();
+    }
+  } else {
+    if (forwardBackMotion == 1) {
+      moveForward();
+    } else if (forwardBackMotion == -1) {
+      moveBackward();
+    } else {
+      applyBrakes();
+    }
+  }
+}
+
 
 //######### Subroutines ################################
 
@@ -194,8 +214,10 @@ BLYNK_WRITE(V1)
   int pinValue = param.asInt();
   if (pinValue == 1) {
     botMotionState = 1;
+    forwardBackMotion = 1;
   } else {
     botMotionState = 0;
+    forwardBackMotion = 0;
   }
 }
 
@@ -205,8 +227,10 @@ BLYNK_WRITE(V2)
   int pinValue = param.asInt();
   if (pinValue == 1) {
     botMotionState = 2;
+    forwardBackMotion = -1;
   } else {
     botMotionState = 0;
+    forwardBackMotion = 0;
   }
 }
 
@@ -216,8 +240,10 @@ BLYNK_WRITE(V3)
   int pinValue = param.asInt(); // assigning incoming value from pin V1 to a variable
   if (pinValue == 1) {
     botMotionState = 4;
+    rightLeftMotion = -1;
   } else {
     botMotionState = 0;
+    rightLeftMotion = 0;
   }
 }  
 
@@ -227,14 +253,18 @@ BLYNK_WRITE(V4)
   int pinValue = param.asInt(); // assigning incoming value from pin V1 to a variable
   if (pinValue == 1) {
     botMotionState = 3;
+    rightLeftMotion = 1;
   } else {
     botMotionState = 0;
+    rightLeftMotion = 0;
   }
 }  
 
 // Emergency stop
 BLYNK_WRITE(V10)
 {
+  forwardBackMotion = 0;
+  rightLeftMotion = 0;
   Serial.println("Stopping all motors...");
   applyBrakes();
   motor1->run(RELEASE);
