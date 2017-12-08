@@ -178,6 +178,11 @@ void loop() {
   } else {
     trackTime = frontTrack[trackIndex];
   }
+  if (timeSinceHit < 10) {
+    glowHit();
+  } else {
+    closeHit();
+  }
   if (timer > trackTime) {
     if (botMotionState == 1) {
       botMotionState = 2;
@@ -299,28 +304,28 @@ void handleSensors() {
   ticks += 1;
 }
 //DATA_COLLECTION_SIZE should be 5/3 times the expected duration of the laser
-const int DATA_COLLECTION_SIZE = 20;
+const int DATA_COLLECTION_SIZE = 28;
 int THRESHOLD = 5;
 
 int sensorData[2][DATA_COLLECTION_SIZE];
 int rewriteCursor[2] = {0, 0};
 
 bool sensorLoop(int a, int reading){
-  int THRESHOLD = sensors[a][4];
   if (sensors[a][5] < DATA_COLLECTION_SIZE){
       sensorData[a][sensors[a][5]] = reading;
       sensors[a][5]++;
     } else{
       shift(sensorData[a], DATA_COLLECTION_SIZE, reading);
-      int backAvg = averageOnSegment(sensorData[a], 0, DATA_COLLECTION_SIZE/5);
-      int midAvg = averageOnSegment(sensorData[a], 2*DATA_COLLECTION_SIZE/5, 3*DATA_COLLECTION_SIZE/5);
-      int frontAvg = averageOnSegment(sensorData[a], 4*DATA_COLLECTION_SIZE/5, DATA_COLLECTION_SIZE/5);
-      int fluctions = 1;
+      int backAvg = averageOnSegment(sensorData[a], 0, 20);
+      int midAvg = sensorData[a][22];
+      int frontAvg = averageOnSegment(sensorData[a], 25, 28);
 
+      if (midAvg > backAvg || midAvg > frontAvg){
+        return false;
+      }
       int activation = midAvg - (frontAvg + backAvg)/2;
-      activation /= fluctions;
 
-      if (activation > THRESHOLD){
+      if (activation < sensors[a][4]){
         Serial.println("Hit detected");
         sensors[a][5] = 0;
         return true;

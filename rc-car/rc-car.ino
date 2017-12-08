@@ -85,6 +85,7 @@ void setup() {
 
 // Actuation Functions
 void applyBrakes() {
+  Serial.println("Releasing power");
   motor1->run(RELEASE);
   motor2->run(RELEASE);
   motor3->run(RELEASE);
@@ -135,8 +136,8 @@ void loop() {
   } else {
     closeHit();
   }
-  //Blynk.run();
-  //blePeripheral.poll();
+  Blynk.run();
+  blePeripheral.poll();
   if (botMotionState == 0) {
     applyBrakes();
   } else if (botMotionState == 1) {
@@ -160,9 +161,9 @@ void loop() {
     applyBrakes();
     showDestroyed();
   }
-  if (timeSinceDestroyed > 10) {
+  if (timeSinceDestroyed > 5) {
     repair();
-    timeSinceDestroyed = 0;
+    //timeSinceDestroyed = 0;
   }
   // Read in sensors for damage
   handleSensors();
@@ -290,10 +291,13 @@ void handleSensors() {
     Serial.println(reading);
     bool fancyCode = true;
     if (fancyCode) {
-      if (sensorLoop(a, reading)) {
+      if (sensorLoop(a, reading) && timeSinceHit > 10) {
+        timeSinceHit = 0;
         int x = sensors[a][2];
         int y = sensors[a][3];
         damage[x][y] += 1;
+      } else {
+        timeSinceHit += 1;
       }
     } else {
       int average = sensors[a][1];
@@ -328,7 +332,7 @@ void handleSensors() {
   ticks += 1;
 }
 //DATA_COLLECTION_SIZE should be 5/3 times the expected duration of the laser
-const int DATA_COLLECTION_SIZE = 23;
+const int DATA_COLLECTION_SIZE = 28;
 
 int sensorData[2][DATA_COLLECTION_SIZE];
 int rewriteCursor[2] = {0, 0};
@@ -339,13 +343,25 @@ bool sensorLoop(int a, int reading){
       sensors[a][5]++;
     } else{
       shift(sensorData[a], DATA_COLLECTION_SIZE, reading);
-      int backAvg = averageOnSegment(sensorData[a], 0, 14);
-      int midAvg = sensorData[a][17];
-      int frontAvg = averageOnSegment(sensorData[a], 19, 23);
+      int backAvg = averageOnSegment(sensorData[a], 0, 20);
+      int midAvg = sensorData[a][22];
+      int frontAvg = averageOnSegment(sensorData[a], 25, 28);
 
       if (midAvg > backAvg || midAvg > frontAvg){
         return false;
       }
+      int frontActivation = frontAvg - (midAvg + backAvg)/2;
+      int backActivation = backAvg - (midAvg + frontActivation)/2;
+      if (frontActivation < sensors[a][4] && backActivation < sensors[a][4]) {
+        return false;
+      }
+
+      double stdDev = standardDeviation(sensorData[a], backAvg, 0, 20);
+      if (stdDev > 2) {
+        Serial.println("What!!!!");
+        return false;
+      }
+      
       int activation = midAvg - (frontAvg + backAvg)/2;
 
       if (activation < sensors[a][4]){
@@ -356,6 +372,17 @@ bool sensorLoop(int a, int reading){
         return false;
       }
     }
+}
+
+double standardDeviation(int dataSet[], int average, int init, int fin){
+  int standardDeviation = 0;
+  for (int i = init; i < fin; i++){
+    int z = (dataSet[i] - average);
+    standardDeviation += z*z;
+  }
+  standardDeviation /= (fin-init);
+  standardDeviation = sqrt(standardDeviation);
+  return standardDeviation;
 }
 
 void shift (int dataSet[], int listSize, int newData){
@@ -386,6 +413,7 @@ void closeHit() {
 }
 
 void showDestroyed() {
+  Serial.println("Showing destroyed");
   digitalWrite(hitPin, HIGH);
   delay(100);
   digitalWrite(hitPin, LOW);
