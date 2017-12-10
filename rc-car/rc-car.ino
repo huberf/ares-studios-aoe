@@ -315,11 +315,15 @@ void handleSensors() {
     Serial.println(reading);
     bool fancyCode = true;
     if (fancyCode) {
-      if (sensorLoop(a, reading) && timeSinceHit > 10) {
-        timeSinceHit = 0;
-        int x = sensors[a][2];
-        int y = sensors[a][3];
-        damage[x][y] += 1;
+      if (sensorLoop(a, reading)) {
+        if (timeSinceHit > 20) {
+          timeSinceHit = 0;
+          int x = sensors[a][2];
+          int y = sensors[a][3];
+          damage[x][y] += 1;
+        } else {
+          timeSinceHit = 0;
+        }
       } else {
         timeSinceHit += 1;
       }
