@@ -138,39 +138,24 @@ void loop() {
   } else {
     closeHit();
   }
+  // Check for new commands
   Blynk.run();
   blePeripheral.poll();
-  bool fancyState = true;
-  if (!fancyState) {
-    if (botMotionState == 0) {
-      applyBrakes();
-    } else if (botMotionState == 1) {
-      moveForward();
-    } else if (botMotionState == 2) {
-      moveBackward();
-    } else if (botMotionState == 3) {
-      turnRight();
-    } else if (botMotionState == 4) {
-      turnLeft();
-    } else {
-      // Unknown movement operation
-      bool doNothing = true;
-    }
-  } else {
-    drive();
-  }
-  if (now() - lastPoll > 2) {
-    //Serial.println("Killing motors. Connection dropped.");
-    applyBrakes();
-  }
+  // Command motors to drive w/ current state unless destroyed
   if (isDestroyed()) {
     timeSinceDestroyed += 1;
     applyBrakes();
     showDestroyed();
+  } else {
+    drive();
+  }
+  if (now() - lastPoll > 2) {
+    Serial.println("Killing motors. Connection dropped.");
+    applyBrakes();
   }
   if (timeSinceDestroyed > 5) {
     repair();
-    //timeSinceDestroyed = 0;
+    timeSinceDestroyed = 0;
   }
   // Read in sensors for damage
   handleSensors();
@@ -299,20 +284,22 @@ bool isDestroyed() {
   return false;
 }
 
-// Read the destroyed status
+// Read the number of hits
 BLYNK_READ(V8)
 {
-  bool destroyed = isDestroyed();
-  Blynk.virtualWrite(8, destroyed);
+  int hitSum = 0;
+  int dimensions = 3;
+  for (int a = 0; a < dimensions; a++) {
+    for (int b = 0; b < dimensions; b++) {
+      hitSum += damage[a][b];
+    }
+  }
+  Blynk.virtualWrite(8, hitSum);
 }
 
 // Any activation of pin initiates repair
 BLYNK_WRITE(V20) {
   repair();
-}
-
-BLYNK_WRITE(V21) {
-  //abnormalThreshold = param.asInt();
 }
 
 /******************** 
