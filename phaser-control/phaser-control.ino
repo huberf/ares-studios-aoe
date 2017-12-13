@@ -99,12 +99,11 @@ void gunSound() {
 }
 
 void gunSoundIndexed(int i) {
-  for (int i = 0; i < 100; i++) {
+  if (i < 100) {
     buzzPiezzo((100 - i)*50 + 10, 2);
-    delay(2);
+  } else {
+    buzzPiezzo(500, 20);
   }
-  buzzPiezzo(500, 20);
-  delay(20);
 }
 
 void reload() {
@@ -166,20 +165,10 @@ void alertLowAmmo() {
 }
 
 void updateDisplay() {
-  // TODO: Build logic to update LCD with shots left
   int maxLeds = 8;
   int litLeds = (shotsLeft+1)/2;
   //litLeds = 7;
   writeLeds(litLeds);
-  /*
-  Serial.println(litLeds);
-  for (int i = 0; i < litLeds; i++) {
-    shiftWrite(i, true);
-  }
-  for (int i = (litLeds); i < maxLeds; i++) {
-    shiftWrite(i, false);
-  }
-  */
 }
 
 void buzzPiezzo(int frequency, int duration) {
